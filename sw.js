@@ -1,5 +1,5 @@
 // Service Worker for 深漂三口之家做账工作台
-const CACHE_NAME = 'family-account-book-v1';
+const CACHE_NAME = 'family-account-book-v2';
 const ASSETS = [
   '/family-account-book/',
   '/family-account-book/index.html',
