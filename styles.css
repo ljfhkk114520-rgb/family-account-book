@@ -25,6 +25,7 @@
   --radius-xs: 8px;
   --nav-h: 64px;
   --header-h: 56px;
+  --safe-top: env(safe-area-inset-top, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
   --t: 0.2s ease;
 
@@ -70,8 +71,8 @@ input, textarea, button, select {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: var(--header-h);
-  padding: 0 16px;
+  min-height: var(--header-h);
+  padding: var(--safe-top) 16px 0;
   border-bottom: 1px solid var(--border-light);
 }
 .header-left, .header-right {
@@ -135,15 +136,15 @@ input, textarea, button, select {
 /* ===== 主内容区 ===== */
 .main-content {
   padding: 12px 16px 130px;
-  min-height: calc(100vh - var(--header-h));
-  min-height: calc(100dvh - var(--header-h));
+  min-height: calc(100vh - var(--header-h) - var(--safe-top));
+  min-height: calc(100dvh - var(--header-h) - var(--safe-top));
 }
 .main-content.bills-page {
   display: flex;
   flex-direction: column;
-  padding: 0 16px 0;
-  height: calc(100vh - var(--header-h) - var(--nav-h));
-  height: calc(100dvh - var(--header-h) - var(--nav-h));
+  padding: 12px 16px 0;
+  height: calc(100vh - var(--header-h) - var(--nav-h) - var(--safe-top) - var(--safe-b));
+  height: calc(100dvh - var(--header-h) - var(--nav-h) - var(--safe-top) - var(--safe-b));
   overflow: hidden;
 }
 
