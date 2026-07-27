@@ -646,6 +646,20 @@ function openRecordModal(recordId, date, quick) {
   renderSubGrid();
   renderMemberChips();
   renderPaymentChips();
+
+  // ===== 修复：强制聚焦金额输入框，调出数字键盘 =====
+  const amountInput = document.getElementById('inputAmount');
+  if (amountInput) {
+    amountInput.setAttribute('inputmode', 'decimal');
+    amountInput.removeAttribute('readonly');
+    amountInput.removeAttribute('disabled');
+    // 延迟聚焦，确保弹窗完全渲染
+    setTimeout(() => {
+      amountInput.focus();
+      // 部分移动浏览器需要 click() 来触发键盘
+      amountInput.click();
+    }, 250);
+  }
 }
 
 function closeRecordModal() {
