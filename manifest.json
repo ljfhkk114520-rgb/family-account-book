@@ -1,0 +1,23 @@
+{
+  "name": "深漂三口之家 · 做账工作台",
+  "short_name": "家庭记账",
+  "description": "深漂三口之家专属家庭做账工作台，支持五大板块预算、日历账单、收支报表",
+  "start_url": "/family-account-book/",
+  "scope": "/family-account-book/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F2F2F7",
+  "theme_color": "#4F46E5",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

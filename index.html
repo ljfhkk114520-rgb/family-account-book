@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="家庭记账">
+<meta name="theme-color" content="#4F46E5">
+<meta name="mobile-web-app-capable" content="yes">
+<title>深漂三口之家 · 做账工作台</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icon-512.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+  <!-- 顶部状态栏 -->
+  <header class="app-header">
+    <div class="header-left" id="headerLeft">
+      <div class="header-avatar" id="headerAvatar">👩</div>
+    </div>
+    <div class="header-center">
+      <div class="header-title" id="headerTitle">做账工作台</div>
+    </div>
+    <div class="header-right">
+      <button class="btn-icon" id="btnSearch" title="搜索">🔍</button>
+      <button class="btn-icon" id="btnNotify" title="消息">🔔<span class="badge" id="badgeNotify" style="display:none"></span></button>
+    </div>
+  </header>
+
+  <!-- 主内容区 -->
+  <main class="main-content" id="mainContent"></main>
+
+  <!-- 快速记账按钮 -->
+  <button class="fab" id="fabAdd" title="快速记账">+</button>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">首页</span>
+    </div>
+    <div class="nav-item" data-page="bills">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">账单</span>
+    </div>
+    <div class="nav-item" data-page="reports">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">报表</span>
+    </div>
+    <div class="nav-item" data-page="notes">
+      <span class="nav-icon">📝</span>
+      <span class="nav-label">笔记</span>
+    </div>
+    <div class="nav-item" data-page="profile">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">我的</span>
+    </div>
+  </nav>
+
+  <!-- 记账弹窗 -->
+  <div class="modal-overlay" id="modalRecord" style="display:none">
+    <div class="modal-sheet">
+      <div class="modal-bar"></div>
+      <div class="modal-header">
+        <button class="btn-text" id="btnRecordDelete" style="display:none;color:var(--danger)">删除</button>
+        <h3 id="modalRecordTitle">记一笔</h3>
+        <button class="btn-text" id="btnRecordClose">取消</button>
+      </div>
+      <div class="modal-body">
+        <!-- 类型切换 -->
+        <div class="type-switch" id="typeSwitch">
+          <button class="type-btn active" data-type="expense">支出</button>
+          <button class="type-btn" data-type="income">收入</button>
+        </div>
+        <!-- 金额 -->
+        <div class="amount-row">
+          <span class="amount-symbol">¥</span>
+          <input type="text" id="inputAmount" placeholder="0.00" inputmode="decimal" autocomplete="off">
+        </div>
+        <!-- 板块 -->
+        <div class="form-section">
+          <div class="section-title">资金板块</div>
+          <div class="cat-grid" id="catGrid"></div>
+        </div>
+        <!-- 二级分类 -->
+        <div class="form-section" id="subSection" style="display:none">
+          <div class="section-title">二级分类</div>
+          <div class="sub-grid" id="subGrid"></div>
+        </div>
+        <!-- 成员 -->
+        <div class="form-section">
+          <div class="section-title">记账成员</div>
+          <div class="chip-row" id="memberChips"></div>
+        </div>
+        <!-- 支付渠道 -->
+        <div class="form-section">
+          <div class="section-title">支付渠道</div>
+          <div class="chip-row" id="paymentChips"></div>
+        </div>
+        <!-- 日期 & 备注 -->
+        <div class="form-row">
+          <label>日期</label>
+          <input type="date" id="inputDate">
+        </div>
+        <div class="form-row">
+          <label>备注</label>
+          <input type="text" id="inputNote" placeholder="消费场景、用途说明..." autocomplete="off">
+        </div>
+        <button class="btn-save" id="btnSaveRecord">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 已有类别选择弹窗 -->
+  <div class="modal-overlay" id="modalCategory" style="display:none">
+    <div class="modal-sheet">
+      <div class="modal-bar"></div>
+      <div class="modal-header">
+        <h3>选择类别</h3>
+        <button class="btn-text" id="btnCategoryClose">取消</button>
+      </div>
+      <div class="modal-body" id="categoryBody">
+        <p style="font-size:12px;color:var(--text-light);margin-bottom:14px;text-align:center">点击下方已有类别快速记账，或选择「其他」自定义</p>
+        <div id="categoryList" class="category-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索弹窗 -->
+  <div class="modal-overlay" id="modalSearch" style="display:none">
+    <div class="modal-sheet">
+      <div class="modal-bar"></div>
+      <div class="modal-header">
+        <h3>搜索账单</h3>
+        <button class="btn-text" id="btnSearchClose">取消</button>
+      </div>
+      <div class="modal-body">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="inputSearch" placeholder="搜索金额、备注、分类..." autocomplete="off">
+        </div>
+        <div id="searchResults" class="search-results"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 确认弹窗 -->
+  <div class="modal-overlay" id="modalConfirm" style="display:none">
+    <div class="modal-sheet" style="max-height:none">
+      <div class="modal-bar"></div>
+      <div class="modal-header">
+        <h3 id="confirmTitle">确认操作</h3>
+        <button class="btn-text" id="btnConfirmClose">取消</button>
+      </div>
+      <div class="modal-body" style="text-align:center">
+        <p id="confirmMsg" style="font-size:15px;margin-bottom:20px;color:var(--text-secondary)"></p>
+        <button class="btn-save" id="btnConfirmOk" style="background:var(--danger)">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" style="display:none"></div>
+</div>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      console.log('SW registered:', reg.scope);
+      // 检测更新
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // 有新版本可用，提示用户刷新
+            if (confirm('记账App有更新，是否立即刷新？')) {
+              window.location.reload();
+            }
+          }
+        });
+      });
+    }).catch(err => console.log('SW failed:', err));
+  });
+}
+</script>
+<script src="app.js"></script>
+</body>
+</html>
