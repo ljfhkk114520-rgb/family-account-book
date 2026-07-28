@@ -1123,16 +1123,32 @@ function renderProfile() {
   h += '</div>';
 
   // 资产
-  h += '<div class="card"><div class="card-head"><span class="title">家庭资产总览</span><span class="more" onclick="editAssets()">编辑</span></div>';
-  h += '<div style="font-size:28px;font-weight:700;color:var(--primary);margin-bottom:12px">' + fmt(totalAssets) + '</div>';
-  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;color:var(--text-secondary)">';
-  h += '<div>现金 ' + fmt(APP_DATA.assets.cash) + '</div>';
-  h += '<div>银行卡 ' + fmt(APP_DATA.assets.bankCards) + '</div>';
-  h += '<div>微信/支付宝 ' + fmt(APP_DATA.assets.wechatAlipay) + '</div>';
-  h += '<div>定期存款 ' + fmt(APP_DATA.assets.deposits) + '</div>';
-  h += '<div>理财投资 ' + fmt(APP_DATA.assets.investments) + '</div>';
-  h += '<div>应急储备 ' + fmt(APP_DATA.assets.emergency) + '</div>';
-  h += '</div></div>';
+  h += '<div class="asset-grid">';
+
+const assetList = [
+ {name:"现金", icon:"💰", value:APP_DATA.assets.cash},
+ {name:"银行卡", icon:"🏦", value:APP_DATA.assets.bankCards},
+ {name:"微信/支付宝", icon:"💳", value:APP_DATA.assets.wechatAlipay},
+ {name:"定期存款", icon:"🏦", value:APP_DATA.assets.deposits},
+ {name:"理财投资", icon:"📈", value:APP_DATA.assets.investments},
+ {name:"应急储备", icon:"🛡️", value:APP_DATA.assets.emergency}
+];
+
+
+assetList.forEach(a=>{
+ h += `
+ <div class="asset-item">
+   <div class="asset-icon">${a.icon}</div>
+   <div>
+    <div>${a.name}</div>
+    <strong>${fmt(a.value)}</strong>
+   </div>
+ </div>
+ `;
+});
+
+
+h += '</div></div>';
 
   // 预算
   h += '<div class="card"><div class="card-head"><span class="title">五大板块预算配置</span><span class="more" onclick="editBudgets()">调整</span></div>';
