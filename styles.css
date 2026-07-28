@@ -924,5 +924,71 @@ textarea {
   margin-bottom: 0;
 }
 .recent-list .bill-row:last-child { border-bottom: none; }
+/* ---------- 资产总览卡片（图一风格） ---------- */
+.asset-overview {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 16px;
+  box-shadow: var(--shadow);
+}
 
+.net-worth {
+  text-align: center;
+  padding: 12px 0 8px;
+}
+.net-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+.net-value {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-top: 4px;
+}
+
+.asset-liability-row {
+  display: flex;
+  justify-content: space-around;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  margin: 12px 0;
+}
+.asset-liability-row > div {
+  text-align: center;
+}
+.al-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.al-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.account-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+.account-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 15px;
+  border-bottom: 1px dashed var(--border);
+}
+.account-item:last-child {
+  border-bottom: none;
+}
+.ac-name {
+  color: var(--text-secondary);
+}
+.ac-value {
+  font-weight: 500;
+}
 
