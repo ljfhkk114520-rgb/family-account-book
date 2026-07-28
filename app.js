@@ -16,6 +16,7 @@ let editingRecordId = null; // 编辑中的账单ID
 let editingNoteId = null;
 let reportTab = 'expense'; // 'expense' | 'trend' | 'budget'
 let noteTab = 'all'; // 'all' | 'monthly' | 'weekly' | 'plan'
+let assetsExpanded = true; // 资产卡片展开状态
 
 // ── 常量 ──
 const STORAGE_KEY = 'family_account_book_v3';
@@ -118,7 +119,6 @@ function loadData() {
       if (saved.totalLiabilities !== undefined) {
         APP_DATA.totalLiabilities = saved.totalLiabilities;
       } else if (saved.liabilities && Array.isArray(saved.liabilities)) {
-        // 旧版本 liabilities 数组转为总负债（简单求和）
         APP_DATA.totalLiabilities = saved.liabilities.reduce((sum, l) => sum + (l.amount || 0), 0);
       }
 
@@ -1064,7 +1064,7 @@ function saveNote() {
 }
 
 // ============================================================
-// 个人中心（优化资产展示）
+// 个人中心（优化资产展示，带折叠功能）
 // ============================================================
 function renderProfile() {
   // 计算资产
@@ -1080,32 +1080,38 @@ function renderProfile() {
   h += '<div class="health-row"><div class="health-score">' + health + '</div><div class="health-info"><div class="hl">家庭财务健康评分</div><div class="hd">' + (health >= 80 ? '财务状况良好，继续保持 👍' : health >= 60 ? '部分板块需优化 ⚡' : '建议调整支出结构 ⚠️') + '</div></div></div>';
   h += '</div>';
 
-  // ── 资产卡片（参照图一风格） ──
+  // ── 资产卡片（参照图一风格，带折叠） ──
   h += '<div class="card asset-overview">';
-  // 净资产（大号）
-  h += '<div class="net-worth">';
-  h += '<div class="net-label">净资产</div>';
-  h += '<div class="net-value">' + fmt(netWorth) + '</div>';
+  // 标题栏 + 折叠按钮
+  h += '<div class="asset-header" onclick="toggleAssets()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">';
+  h += '<span style="font-weight:600;font-size:16px;">📊 家庭资产总览</span>';
+  h += '<span id="assetsToggleIcon" style="font-size:18px;">' + (assetsExpanded ? '▾' : '▸') + '</span>';
   h += '</div>';
-  // 总资产 / 总负债 两列
-  h += '<div class="asset-liability-row">';
-  h += '<div><div class="al-label">总资产</div><div class="al-value">' + fmt(totalAssets) + '</div></div>';
-  h += '<div><div class="al-label">总负债</div><div class="al-value" style="color:var(--danger)">' + fmt(totalLiabilities) + '</div></div>';
-  h += '</div>';
-  // 资金账户列表
-  h += '<div class="account-list">';
-  APP_DATA.assetItems.forEach(item => {
-    if (item.value > 0) {
-      h += '<div class="account-item"><span class="ac-name">' + item.name + '</span><span class="ac-value">' + fmt(item.value) + '</span></div>';
+
+  if (assetsExpanded) {
+    // 净资产
+    h += '<div class="net-worth">';
+    h += '<div class="net-label">净资产</div>';
+    h += '<div class="net-value">' + fmt(netWorth) + '</div>';
+    h += '</div>';
+    // 总资产 / 总负债
+    h += '<div class="asset-liability-row">';
+    h += '<div><div class="al-label">总资产</div><div class="al-value">' + fmt(totalAssets) + '</div></div>';
+    h += '<div><div class="al-label">总负债</div><div class="al-value" style="color:var(--danger)">' + fmt(totalLiabilities) + '</div></div>';
+    h += '</div>';
+    // 资金账户列表
+    h += '<div class="account-list">';
+    APP_DATA.assetItems.forEach(item => {
+      if (item.value > 0) {
+        h += '<div class="account-item"><span class="ac-name">' + item.name + '</span><span class="ac-value">' + fmt(item.value) + '</span></div>';
+      }
+    });
+    if (APP_DATA.assetItems.every(item => item.value === 0)) {
+      h += '<div style="text-align:center;color:var(--text-light);font-size:13px;padding:8px 0;">暂无资产数据，点击“编辑”添加</div>';
     }
-  });
-  // 如果所有资产都为0，显示提示
-  if (APP_DATA.assetItems.every(item => item.value === 0)) {
-    h += '<div style="text-align:center;color:var(--text-light);font-size:13px;padding:8px 0;">暂无资产数据，点击“编辑”添加</div>';
+    h += '</div>';
+    h += '<div style="text-align:right;margin-top:8px;"><span class="more" onclick="editAssets()" style="font-size:13px;color:var(--primary);cursor:pointer;">✏️ 编辑资产</span></div>';
   }
-  h += '</div>';
-  // 编辑按钮
-  h += '<div style="text-align:right;margin-top:8px;"><span class="more" onclick="editAssets()" style="font-size:13px;color:var(--primary);cursor:pointer;">✏️ 编辑资产</span></div>';
   h += '</div>';
 
   // 预算配置
@@ -1164,6 +1170,14 @@ function calcHealth() {
   if (emergency >= 30000) s += 5;
   else s -= 3;
   return Math.max(0, Math.min(100, s));
+}
+
+// ============================================================
+// 切换资产折叠
+// ============================================================
+function toggleAssets() {
+  assetsExpanded = !assetsExpanded;
+  render();  // 重新渲染页面
 }
 
 // ============================================================
