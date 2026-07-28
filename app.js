@@ -56,7 +56,56 @@ const APP_DATA = {
   records: [],
   notes: [],
   investments: [],
-  assets: { cash:0, bankCards:0, wechatAlipay:0, deposits:0, investments:0, emergency:0 },
+  assets: {
+    cash:{
+        name:"现金",
+        icon:"💰",
+        color:"#F5B700",
+        amount:0
+    },
+
+    bank:{
+        name:"银行存款",
+        icon:"🏦",
+        color:"#1677FF",
+        amount:0
+    },
+
+    gold:{
+        name:"黄金",
+        icon:"🪙",
+        color:"#FFC107",
+        amount:0
+    },
+
+    investments:{
+        name:"股票基金",
+        icon:"📈",
+        color:"#E91E63",
+        amount:0
+    },
+
+    house:{
+        name:"房产",
+        icon:"🏠",
+        color:"#52C41A",
+        amount:0
+    },
+
+    car:{
+        name:"车辆",
+        icon:"🚗",
+        color:"#666666",
+        amount:0
+    },
+
+    other:{
+        name:"其他资产",
+        icon:"📦",
+        color:"#999999",
+        amount:0
+    }
+},
   liabilities: [],
   logs: []
 };
