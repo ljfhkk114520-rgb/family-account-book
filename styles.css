@@ -1216,3 +1216,90 @@ textarea {
   font-weight: 500;
 }
 
+/* ===== 头像选择器（家庭成员编辑） ===== */
+.avatar-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px 0;
+}
+.avatar-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  margin-right: 4px;
+}
+.avatar-opt {
+  font-size: 18px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: var(--t);
+  border: 2px solid transparent;
+  background: var(--bg);
+  line-height: 1.2;
+}
+.avatar-opt:hover { background: var(--primary-bg); }
+.avatar-opt.active {
+  border-color: var(--primary);
+  background: var(--primary-bg);
+}
+
+/* ===== 资产编辑弹窗（editAssets） ===== */
+.asset-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  background: var(--bg);
+  padding: 8px;
+  border-radius: 8px;
+}
+.asset-item .asset-name {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--card);
+}
+.asset-item .asset-value {
+  width: 100px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  background: var(--card);
+}
+.asset-item .btn-delete-asset {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+.btn-add-asset {
+  width: 100%;
+  padding: 8px;
+  background: var(--success);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  margin: 8px 0;
+}
+.btn-add-asset:active { background: #059669; }
+.btn-save-assets {
+  width: 100%;
+  padding: 10px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-save-assets:active { background: #4338CA; }
