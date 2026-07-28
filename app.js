@@ -56,7 +56,7 @@ const APP_DATA = {
   records: [],
   notes: [],
   investments: [],
-  // ----- 资产改用数组，支持自定义名称和增删 -----
+  // ----- 资产数组 -----
   assetItems: [
     { id: 'cash', name: '现金', value: 0 },
     { id: 'bankCards', name: '银行卡', value: 0 },
@@ -65,7 +65,8 @@ const APP_DATA = {
     { id: 'investments', name: '理财投资', value: 0 },
     { id: 'emergency', name: '应急储备', value: 0 }
   ],
-  liabilities: [],
+  totalLiabilities: 0, // 总负债
+  liabilities: [], // 保留，暂未使用
   logs: []
 };
 
@@ -93,11 +94,10 @@ function loadData() {
       if (saved.notes && Array.isArray(saved.notes)) APP_DATA.notes = saved.notes;
       if (saved.investments && Array.isArray(saved.investments)) APP_DATA.investments = saved.investments;
 
-      // ----- 资产数据迁移：优先使用 assetItems，若不存在则从旧 assets 转换 -----
+      // ----- 资产数据迁移 -----
       if (saved.assetItems && Array.isArray(saved.assetItems)) {
         APP_DATA.assetItems = saved.assetItems;
       } else if (saved.assets && typeof saved.assets === 'object') {
-        // 旧版本 assets 对象 → 转为 assetItems
         const oldAssets = saved.assets;
         const mapping = {
           cash: '现金',
@@ -112,10 +112,16 @@ function loadData() {
           name: mapping[key],
           value: oldAssets[key] || 0
         }));
-        // 额外自定义项（如果有）也会被忽略，但旧版本没有自定义，所以安全
       }
 
-      if (saved.liabilities && Array.isArray(saved.liabilities)) APP_DATA.liabilities = saved.liabilities;
+      // 负债迁移
+      if (saved.totalLiabilities !== undefined) {
+        APP_DATA.totalLiabilities = saved.totalLiabilities;
+      } else if (saved.liabilities && Array.isArray(saved.liabilities)) {
+        // 旧版本 liabilities 数组转为总负债（简单求和）
+        APP_DATA.totalLiabilities = saved.liabilities.reduce((sum, l) => sum + (l.amount || 0), 0);
+      }
+
       if (saved.logs && Array.isArray(saved.logs)) APP_DATA.logs = saved.logs;
       if (saved.subcategories && typeof saved.subcategories === 'object') {
         for (const k of Object.keys(APP_DATA.subcategories)) {
@@ -145,6 +151,7 @@ function initFresh() {
     { id: 'investments', name: '理财投资', value: 0 },
     { id: 'emergency', name: '应急储备', value: 0 }
   ];
+  APP_DATA.totalLiabilities = 0;
   APP_DATA.liabilities = [];
   APP_DATA.logs = [{ time: nowStr(), action: '欢迎使用深漂三口之家做账工作台！' }];
   saveData();
@@ -1057,40 +1064,65 @@ function saveNote() {
 }
 
 // ============================================================
-// 个人中心
+// 个人中心（优化资产展示）
 // ============================================================
 function renderProfile() {
-  // 计算总资产
+  // 计算资产
   const totalAssets = APP_DATA.assetItems.reduce((sum, item) => sum + item.value, 0);
+  const totalLiabilities = APP_DATA.totalLiabilities || 0;
+  const netWorth = totalAssets - totalLiabilities;
   const health = calcHealth();
 
   let h = '';
+  // 顶部个人信息
   h += '<div class="profile-top">';
   h += '<div class="row1"><div class="pf-avatar">👨‍👩‍👦</div><div><div class="pf-name">' + APP_DATA.family.name + '</div><div class="pf-sub">双职工家庭 · 各月收入可独立设置</div><div class="pf-edit" onclick="editFamily()">修改信息</div></div></div>';
   h += '<div class="health-row"><div class="health-score">' + health + '</div><div class="health-info"><div class="hl">家庭财务健康评分</div><div class="hd">' + (health >= 80 ? '财务状况良好，继续保持 👍' : health >= 60 ? '部分板块需优化 ⚡' : '建议调整支出结构 ⚠️') + '</div></div></div>';
   h += '</div>';
 
-  // 资产卡片
-  h += '<div class="card"><div class="card-head"><span class="title">家庭资产总览</span><span class="more" onclick="editAssets()">编辑</span></div>';
-  h += '<div style="font-size:28px;font-weight:700;color:var(--primary);margin-bottom:12px">' + fmt(totalAssets) + '</div>';
-  h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;color:var(--text-secondary)">';
+  // ── 资产卡片（参照图一风格） ──
+  h += '<div class="card asset-overview">';
+  // 净资产（大号）
+  h += '<div class="net-worth">';
+  h += '<div class="net-label">净资产</div>';
+  h += '<div class="net-value">' + fmt(netWorth) + '</div>';
+  h += '</div>';
+  // 总资产 / 总负债 两列
+  h += '<div class="asset-liability-row">';
+  h += '<div><div class="al-label">总资产</div><div class="al-value">' + fmt(totalAssets) + '</div></div>';
+  h += '<div><div class="al-label">总负债</div><div class="al-value" style="color:var(--danger)">' + fmt(totalLiabilities) + '</div></div>';
+  h += '</div>';
+  // 资金账户列表
+  h += '<div class="account-list">';
   APP_DATA.assetItems.forEach(item => {
-    h += '<div>' + item.name + ' ' + fmt(item.value) + '</div>';
+    if (item.value > 0) {
+      h += '<div class="account-item"><span class="ac-name">' + item.name + '</span><span class="ac-value">' + fmt(item.value) + '</span></div>';
+    }
   });
-  h += '</div></div>';
+  // 如果所有资产都为0，显示提示
+  if (APP_DATA.assetItems.every(item => item.value === 0)) {
+    h += '<div style="text-align:center;color:var(--text-light);font-size:13px;padding:8px 0;">暂无资产数据，点击“编辑”添加</div>';
+  }
+  h += '</div>';
+  // 编辑按钮
+  h += '<div style="text-align:right;margin-top:8px;"><span class="more" onclick="editAssets()" style="font-size:13px;color:var(--primary);cursor:pointer;">✏️ 编辑资产</span></div>';
+  h += '</div>';
 
+  // 预算配置
   h += '<div class="card"><div class="card-head"><span class="title">五大板块预算配置</span><span class="more" onclick="editBudgets()">调整</span></div>';
   APP_DATA.budgets.forEach(b => {
     h += '<div class="budget-row"><span class="br-name">' + b.icon + ' ' + b.name + '</span><span class="br-amt">' + fmt(b.amount) + ' <span style="color:var(--text-light);font-weight:400;font-size:11px">' + (b.ratio * 100).toFixed(0) + '%</span></span></div>';
   });
   h += '</div>';
 
+  // 家庭成员
   h += '<div class="card"><div class="card-head"><span class="title">家庭成员</span><span class="more" onclick="editMembers()">编辑</span></div>';
   APP_DATA.family.members.forEach(m => {
     h += '<div class="member-row"><div class="mr-avatar">' + m.avatar + '</div><div class="mr-info"><div class="mr-name">' + m.name + ' · ' + m.age + '岁</div><div class="mr-role">' + (m.role === 'admin' ? '管理员 · 可记账/编辑' : '仅查看') + '</div></div></div>';
   });
   h += '</div>';
 
+  // 功能菜单
   h += '<div class="menu-group">';
   h += '<div class="menu-item" onclick="showNotifications()"><div class="left"><span class="mi-icon">🔔</span><span class="mi-label">消息通知</span></div><span class="mi-arrow">›</span></div>';
   h += '<div class="menu-item" onclick="showLogs()"><div class="left"><span class="mi-icon">📜</span><span class="mi-label">操作日志</span></div><span class="mi-arrow">›</span></div>';
@@ -1098,6 +1130,7 @@ function renderProfile() {
   h += '<div class="menu-item danger" onclick="doReset()"><div class="left"><span class="mi-icon">🔄</span><span class="mi-label">重置数据</span></div><span class="mi-arrow">›</span></div>';
   h += '</div>';
 
+  // 理财台账
   h += '<div class="menu-group"><div class="gtitle">理财台账</div>';
   if (APP_DATA.investments.length === 0) {
     h += '<div class="menu-item" onclick="editInvestments()"><div class="left"><span class="mi-icon">📊</span><span class="mi-label">添加投资项目</span></div><span class="mi-arrow">›</span></div>';
@@ -1127,7 +1160,6 @@ function calcHealth() {
   if (te <= 27000) s += 10;
   else if (te <= 30000) s += 5;
   else s -= 10;
-  // 应急储备取 id='emergency'
   const emergency = APP_DATA.assetItems.find(item => item.id === 'emergency')?.value || 0;
   if (emergency >= 30000) s += 5;
   else s -= 3;
@@ -1179,7 +1211,7 @@ function editFamily() {
   modal.style.display = 'flex';
 }
 
-// ----- 全新的资产编辑函数 -----
+// ── 资产编辑（含总负债） ──
 function editAssets() {
   let modal = document.getElementById('modalAssets');
   if (!modal) {
@@ -1201,7 +1233,15 @@ function renderAssetsForm() {
   if (!container) return;
 
   let h = '';
-  // 遍历 assetItems 渲染每一项
+
+  // ---- 总负债 ----
+  h += '<div class="form-row" style="margin-bottom:16px;">';
+  h += '<label style="font-weight:500;">总负债</label>';
+  h += '<input type="number" id="edit_totalLiabilities" value="' + (APP_DATA.totalLiabilities || 0) + '" step="0.01" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;">';
+  h += '</div>';
+
+  // ---- 资产列表 ----
+  h += '<div style="margin-bottom:12px;font-weight:500;font-size:14px;">资金账户</div>';
   APP_DATA.assetItems.forEach((item, index) => {
     h += '<div class="asset-item" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);padding:8px;border-radius:8px;">';
     h += '<input type="text" class="asset-name" data-id="' + item.id + '" value="' + item.name + '" placeholder="名称" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">';
@@ -1217,23 +1257,22 @@ function renderAssetsForm() {
 
   container.innerHTML = h;
 
-  // 绑定事件
+  // ---- 事件绑定 ----
   container.querySelector('.btn-add-asset').addEventListener('click', () => {
-    // 生成新 id
     const newId = 'asset_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
     APP_DATA.assetItems.push({ id: newId, name: '新资产', value: 0 });
-    renderAssetsForm(); // 重新渲染
+    renderAssetsForm();
   });
 
   container.querySelectorAll('.btn-delete-asset').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const id = e.target.dataset.id;
-      // 至少保留一项
       if (APP_DATA.assetItems.length <= 1) {
         toast('至少保留一项资产');
         return;
       }
-      confirmAction('删除资产', '确定要删除“' + (APP_DATA.assetItems.find(item => item.id === id)?.name || '') + '”吗？', () => {
+      const name = APP_DATA.assetItems.find(item => item.id === id)?.name || '';
+      confirmAction('删除资产', '确定要删除“' + name + '”吗？', () => {
         APP_DATA.assetItems = APP_DATA.assetItems.filter(item => item.id !== id);
         renderAssetsForm();
         toast('已删除');
@@ -1242,25 +1281,27 @@ function renderAssetsForm() {
   });
 
   container.querySelector('.btn-save-assets').addEventListener('click', () => {
-    // 收集所有输入值
+    // 保存负债
+    const liabInput = document.getElementById('edit_totalLiabilities');
+    if (liabInput) {
+      const val = parseFloat(liabInput.value);
+      if (!isNaN(val) && val >= 0) APP_DATA.totalLiabilities = val;
+    }
+
+    // 保存资产项
     const nameInputs = container.querySelectorAll('.asset-name');
     const valueInputs = container.querySelectorAll('.asset-value');
-    const newItems = [];
     nameInputs.forEach((input, idx) => {
       const id = input.dataset.id;
       const name = input.value.trim() || '未命名';
       const value = parseFloat(valueInputs[idx].value) || 0;
-      // 更新或新增（但这里按 id 修改）
       const existing = APP_DATA.assetItems.find(item => item.id === id);
       if (existing) {
         existing.name = name;
         existing.value = value;
-      } else {
-        // 这种情况不会发生，因为所有 input 都来自已有数据
       }
     });
-    // 同步排序（保持原有顺序）
-    // 保存
+
     addLog('更新了资产数据');
     saveData();
     document.getElementById('modalAssets').style.display = 'none';
@@ -1269,7 +1310,7 @@ function renderAssetsForm() {
   });
 }
 
-// 保留旧函数但不用了（兼容）
+// 预算编辑（不变）
 function editBudgets() {
   let modal = document.getElementById('modalBudgets');
   if (!modal) {
@@ -1306,6 +1347,7 @@ function editBudgets() {
   modal.style.display = 'flex';
 }
 
+// 头像预设（不变）
 const AVATAR_PRESETS = [
   ['👩', '👩🏻', '👩🏼', '👩🏽', '👩🏾', '👩🏿', '👩‍🦰', '👩‍🦱', '👩‍🦳', '👩‍🦲', '👱‍♀️', '👸', '🤱', '🙋‍♀️', '🙆‍♀️', '💁‍♀️', '🤷‍♀️'],
   ['👨', '👨🏻', '👨🏼', '👨🏽', '👨🏾', '👨🏿', '👨‍🦰', '👨‍🦱', '👨‍🦳', '👨‍🦲', '👱‍♂️', '🤴', '🙋‍♂️', '🙆‍♂️', '💁‍♂️', '🤷‍♂️'],
@@ -1534,6 +1576,7 @@ function doReset() {
       { id: 'investments', name: '理财投资', value: 0 },
       { id: 'emergency', name: '应急储备', value: 0 }
     ];
+    APP_DATA.totalLiabilities = 0;
     APP_DATA.family.monthlyIncomes = {};
     const defs = [{ amount: 13500, ratio: 0.45 }, { amount: 6000, ratio: 0.20 }, { amount: 6000, ratio: 0.20 }, { amount: 3000, ratio: 0.10 }, { amount: 1500, ratio: 0.05 }];
     APP_DATA.budgets.forEach((b, i) => { b.amount = defs[i].amount; b.ratio = defs[i].ratio; });
