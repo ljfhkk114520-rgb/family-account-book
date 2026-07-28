@@ -1149,25 +1149,117 @@ textarea {
   background: white !important;
 }
 
-/* ---- 月度汇总条（紧凑） ---- */
+/* ---------- 终极压缩账单日历 ---------- */
+.cal-card.v2 {
+  padding: 2px 4px !important;
+  border-radius: 6px !important;
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  margin-bottom: 0 !important;
+}
+
+/* 头部 */
+.cal-head {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0 2px !important;
+  margin-bottom: 0 !important;
+}
+.cal-head .title {
+  font-size: 12px !important;
+  font-weight: 600 !important;
+}
+.cal-head button {
+  font-size: 12px !important;
+  padding: 0 4px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  color: var(--text-secondary) !important;
+}
+
+/* 星期行 */
+.cal-weekdays {
+  font-size: 9px !important;
+  color: var(--text-light) !important;
+  margin-bottom: 0 !important;
+  padding: 0 !important;
+}
+.cal-weekdays div {
+  text-align: center;
+  padding: 1px 0 !important;
+}
+
+/* 日历网格 */
+.cal-grid.v2 {
+  gap: 1px !important;
+}
+
+.cal-cell.v2 {
+  aspect-ratio: 1 / 0.5 !important;  /* 压到最扁 */
+  font-size: 10px !important;
+  border-radius: 2px !important;
+  padding: 0 !important;
+  min-height: 18px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  cursor: pointer;
+}
+
+.cal-cell.v2.current {
+  background: var(--bg) !important;
+}
+.cal-cell.v2.neighbor {
+  color: var(--text-light) !important;
+  background: transparent !important;
+}
+.cal-cell.v2.selected {
+  background: var(--primary) !important;
+  color: white !important;
+  border-radius: 3px !important;
+}
+.cal-cell.v2.today {
+  font-weight: 700 !important;
+  border: 1px solid var(--primary) !important;
+  border-radius: 3px !important;
+}
+
+.cal-day-num {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  font-weight: 500 !important;
+}
+
+/* 隐藏所有额外信息 */
+.cal-day-inc,
+.cal-day-exp,
+.cal-day-dot {
+  display: none !important;
+}
+
+/* ---- 月度汇总条（极简） ---- */
 .month-summary {
   display: flex !important;
   justify-content: space-around !important;
-  padding: 3px 4px !important;
-  margin: 2px 0 0 0 !important;
-  background: var(--card-bg) !important;
-  border-radius: 0 0 6px 6px !important;
+  padding: 2px 4px !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border-radius: 0 !important;
   box-shadow: none !important;
 }
 .month-summary > div {
   text-align: center;
 }
 .month-summary .ms-label {
-  font-size: 9px !important;
+  font-size: 8px !important;
   color: var(--text-light) !important;
 }
 .month-summary .ms-value {
-  font-size: 12px !important;
+  font-size: 11px !important;
   font-weight: 600 !important;
 }
 .ms-value.income {
@@ -1180,7 +1272,7 @@ textarea {
   color: var(--primary) !important;
 }
 
-/* ---- 明细列表 ---- */
+/* ---- 明细列表最大化 ---- */
 .bill-sticky-top {
   padding: 0 !important;
   background: var(--bg) !important;
@@ -1214,9 +1306,9 @@ textarea {
   border-bottom: 1px solid var(--border) !important;
 }
 .bill-icon-v2 {
-  width: 28px !important;
-  height: 28px !important;
-  font-size: 13px !important;
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 12px !important;
   border-radius: 50% !important;
   flex-shrink: 0 !important;
 }
