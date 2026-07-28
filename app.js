@@ -57,58 +57,38 @@ const APP_DATA = {
   notes: [],
   investments: [],
   assets: {
-    cash:{
-        name:"现金",
-        icon:"💰",
-        color:"#F5B700",
-        amount:0
-    },
-
-    bank:{
-        name:"银行存款",
-        icon:"🏦",
-        color:"#1677FF",
-        amount:0
-    },
-
-    gold:{
-        name:"黄金",
-        icon:"🪙",
-        color:"#FFC107",
-        amount:0
-    },
-
-    investments:{
-        name:"股票基金",
-        icon:"📈",
-        color:"#E91E63",
-        amount:0
-    },
-
-    house:{
-        name:"房产",
-        icon:"🏠",
-        color:"#52C41A",
-        amount:0
-    },
-
-    car:{
-        name:"车辆",
-        icon:"🚗",
-        color:"#666666",
-        amount:0
-    },
-
-    other:{
-        name:"其他资产",
-        icon:"📦",
-        color:"#999999",
-        amount:0
-    }
-},
-  liabilities: [],
-  logs: []
-};
+assets:[
+ {
+   id:1,
+   name:'现金',
+   value:0
+ },
+ {
+   id:2,
+   name:'银行卡',
+   value:0
+ },
+ {
+   id:3,
+   name:'微信/支付宝',
+   value:0
+ },
+ {
+   id:4,
+   name:'定期存款',
+   value:0
+ },
+ {
+   id:5,
+   name:'理财投资',
+   value:0
+ },
+ {
+   id:6,
+   name:'应急储备',
+   value:0
+ }
+]
 
 // ── 工具函数 ──
 function uid() { return 'r' + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
