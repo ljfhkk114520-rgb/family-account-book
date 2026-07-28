@@ -56,7 +56,15 @@ const APP_DATA = {
   records: [],
   notes: [],
   investments: [],
-  assets: { cash: 0, bankCards: 0, wechatAlipay: 0, deposits: 0, investments: 0, emergency: 0 },
+  // ----- 资产改用数组，支持自定义名称和增删 -----
+  assetItems: [
+    { id: 'cash', name: '现金', value: 0 },
+    { id: 'bankCards', name: '银行卡', value: 0 },
+    { id: 'wechatAlipay', name: '微信/支付宝', value: 0 },
+    { id: 'deposits', name: '定期存款', value: 0 },
+    { id: 'investments', name: '理财投资', value: 0 },
+    { id: 'emergency', name: '应急储备', value: 0 }
+  ],
   liabilities: [],
   logs: []
 };
@@ -84,7 +92,29 @@ function loadData() {
       if (saved.records && Array.isArray(saved.records)) APP_DATA.records = saved.records;
       if (saved.notes && Array.isArray(saved.notes)) APP_DATA.notes = saved.notes;
       if (saved.investments && Array.isArray(saved.investments)) APP_DATA.investments = saved.investments;
-      if (saved.assets && typeof saved.assets === 'object') Object.assign(APP_DATA.assets, saved.assets);
+
+      // ----- 资产数据迁移：优先使用 assetItems，若不存在则从旧 assets 转换 -----
+      if (saved.assetItems && Array.isArray(saved.assetItems)) {
+        APP_DATA.assetItems = saved.assetItems;
+      } else if (saved.assets && typeof saved.assets === 'object') {
+        // 旧版本 assets 对象 → 转为 assetItems
+        const oldAssets = saved.assets;
+        const mapping = {
+          cash: '现金',
+          bankCards: '银行卡',
+          wechatAlipay: '微信/支付宝',
+          deposits: '定期存款',
+          investments: '理财投资',
+          emergency: '应急储备'
+        };
+        APP_DATA.assetItems = Object.keys(mapping).map(key => ({
+          id: key,
+          name: mapping[key],
+          value: oldAssets[key] || 0
+        }));
+        // 额外自定义项（如果有）也会被忽略，但旧版本没有自定义，所以安全
+      }
+
       if (saved.liabilities && Array.isArray(saved.liabilities)) APP_DATA.liabilities = saved.liabilities;
       if (saved.logs && Array.isArray(saved.logs)) APP_DATA.logs = saved.logs;
       if (saved.subcategories && typeof saved.subcategories === 'object') {
@@ -107,7 +137,14 @@ function initFresh() {
   APP_DATA.records = [];
   APP_DATA.notes = [];
   APP_DATA.investments = [];
-  APP_DATA.assets = { cash: 0, bankCards: 0, wechatAlipay: 0, deposits: 0, investments: 0, emergency: 0 };
+  APP_DATA.assetItems = [
+    { id: 'cash', name: '现金', value: 0 },
+    { id: 'bankCards', name: '银行卡', value: 0 },
+    { id: 'wechatAlipay', name: '微信/支付宝', value: 0 },
+    { id: 'deposits', name: '定期存款', value: 0 },
+    { id: 'investments', name: '理财投资', value: 0 },
+    { id: 'emergency', name: '应急储备', value: 0 }
+  ];
   APP_DATA.liabilities = [];
   APP_DATA.logs = [{ time: nowStr(), action: '欢迎使用深漂三口之家做账工作台！' }];
   saveData();
@@ -258,7 +295,11 @@ function renderDashboard() {
   const te = records.filter(r => r.type === 'expense').reduce((s, r) => s + r.amount, 0);
   const monthlyIncome = getMonthlyIncome(currentYear, currentMonth);
   const balance = monthlyIncome - te;
-  const saving = APP_DATA.assets.emergency + APP_DATA.assets.deposits;
+
+  // 储蓄备用金 = 定期存款 + 应急储备 (按 id 取)
+  const deposits = APP_DATA.assetItems.find(item => item.id === 'deposits')?.value || 0;
+  const emergency = APP_DATA.assetItems.find(item => item.id === 'emergency')?.value || 0;
+  const saving = deposits + emergency;
 
   let h = '';
   h += '<div class="month-bar">';
@@ -1019,7 +1060,8 @@ function saveNote() {
 // 个人中心
 // ============================================================
 function renderProfile() {
-  const totalAssets = Object.values(APP_DATA.assets).reduce((s, v) => s + v, 0);
+  // 计算总资产
+  const totalAssets = APP_DATA.assetItems.reduce((sum, item) => sum + item.value, 0);
   const health = calcHealth();
 
   let h = '';
@@ -1028,15 +1070,13 @@ function renderProfile() {
   h += '<div class="health-row"><div class="health-score">' + health + '</div><div class="health-info"><div class="hl">家庭财务健康评分</div><div class="hd">' + (health >= 80 ? '财务状况良好，继续保持 👍' : health >= 60 ? '部分板块需优化 ⚡' : '建议调整支出结构 ⚠️') + '</div></div></div>';
   h += '</div>';
 
+  // 资产卡片
   h += '<div class="card"><div class="card-head"><span class="title">家庭资产总览</span><span class="more" onclick="editAssets()">编辑</span></div>';
   h += '<div style="font-size:28px;font-weight:700;color:var(--primary);margin-bottom:12px">' + fmt(totalAssets) + '</div>';
   h += '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12px;color:var(--text-secondary)">';
-  h += '<div>现金 ' + fmt(APP_DATA.assets.cash) + '</div>';
-  h += '<div>银行卡 ' + fmt(APP_DATA.assets.bankCards) + '</div>';
-  h += '<div>微信/支付宝 ' + fmt(APP_DATA.assets.wechatAlipay) + '</div>';
-  h += '<div>定期存款 ' + fmt(APP_DATA.assets.deposits) + '</div>';
-  h += '<div>理财投资 ' + fmt(APP_DATA.assets.investments) + '</div>';
-  h += '<div>应急储备 ' + fmt(APP_DATA.assets.emergency) + '</div>';
+  APP_DATA.assetItems.forEach(item => {
+    h += '<div>' + item.name + ' ' + fmt(item.value) + '</div>';
+  });
   h += '</div></div>';
 
   h += '<div class="card"><div class="card-head"><span class="title">五大板块预算配置</span><span class="more" onclick="editBudgets()">调整</span></div>';
@@ -1087,7 +1127,9 @@ function calcHealth() {
   if (te <= 27000) s += 10;
   else if (te <= 30000) s += 5;
   else s -= 10;
-  if (APP_DATA.assets.emergency >= 30000) s += 5;
+  // 应急储备取 id='emergency'
+  const emergency = APP_DATA.assetItems.find(item => item.id === 'emergency')?.value || 0;
+  if (emergency >= 30000) s += 5;
   else s -= 3;
   return Math.max(0, Math.min(100, s));
 }
@@ -1137,6 +1179,7 @@ function editFamily() {
   modal.style.display = 'flex';
 }
 
+// ----- 全新的资产编辑函数 -----
 function editAssets() {
   let modal = document.getElementById('modalAssets');
   if (!modal) {
@@ -1149,30 +1192,84 @@ function editAssets() {
     modal.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
     document.getElementById('btnAssetsClose').addEventListener('click', () => modal.style.display = 'none');
   }
-
-  const labels = { cash: '现金', bankCards: '银行卡', wechatAlipay: '微信/支付宝', deposits: '定期存款', investments: '理财投资', emergency: '应急储备' };
-  const a = APP_DATA.assets;
-  let f = '';
-  for (const [k, lbl] of Object.entries(labels)) {
-    f += '<div class="form-row"><label style="width:80px">' + lbl + '</label><input type="number" id="ast_' + k + '" value="' + a[k] + '" step="0.01" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px"></div>';
-  }
-  f += '<button class="btn-save" id="btnSaveAssets">保存资产</button>';
-  document.getElementById('assetsForm').innerHTML = f;
-
-  document.getElementById('btnSaveAssets').onclick = () => {
-    for (const k of Object.keys(labels)) {
-      const v = parseFloat(document.getElementById('ast_' + k).value);
-      if (!isNaN(v) && v >= 0) APP_DATA.assets[k] = v;
-    }
-    addLog('更新了家庭资产数据');
-    saveData();
-    modal.style.display = 'none';
-    render();
-    toast('资产已更新');
-  };
+  renderAssetsForm();
   modal.style.display = 'flex';
 }
 
+function renderAssetsForm() {
+  const container = document.getElementById('assetsForm');
+  if (!container) return;
+
+  let h = '';
+  // 遍历 assetItems 渲染每一项
+  APP_DATA.assetItems.forEach((item, index) => {
+    h += '<div class="asset-item" style="display:flex;align-items:center;gap:8px;margin-bottom:8px;background:var(--bg);padding:8px;border-radius:8px;">';
+    h += '<input type="text" class="asset-name" data-id="' + item.id + '" value="' + item.name + '" placeholder="名称" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">';
+    h += '<input type="number" class="asset-value" data-id="' + item.id + '" value="' + item.value + '" step="0.01" style="width:100px;padding:6px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px;">';
+    if (APP_DATA.assetItems.length > 1) {
+      h += '<button class="btn-delete-asset" data-id="' + item.id + '" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:18px;padding:0 4px;">✕</button>';
+    }
+    h += '</div>';
+  });
+
+  h += '<button class="btn-add-asset" style="width:100%;padding:8px;background:var(--success);color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;margin:8px 0;">+ 添加资产</button>';
+  h += '<button class="btn-save-assets" style="width:100%;padding:10px;background:var(--primary);color:white;border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">保存资产</button>';
+
+  container.innerHTML = h;
+
+  // 绑定事件
+  container.querySelector('.btn-add-asset').addEventListener('click', () => {
+    // 生成新 id
+    const newId = 'asset_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    APP_DATA.assetItems.push({ id: newId, name: '新资产', value: 0 });
+    renderAssetsForm(); // 重新渲染
+  });
+
+  container.querySelectorAll('.btn-delete-asset').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const id = e.target.dataset.id;
+      // 至少保留一项
+      if (APP_DATA.assetItems.length <= 1) {
+        toast('至少保留一项资产');
+        return;
+      }
+      confirmAction('删除资产', '确定要删除“' + (APP_DATA.assetItems.find(item => item.id === id)?.name || '') + '”吗？', () => {
+        APP_DATA.assetItems = APP_DATA.assetItems.filter(item => item.id !== id);
+        renderAssetsForm();
+        toast('已删除');
+      });
+    });
+  });
+
+  container.querySelector('.btn-save-assets').addEventListener('click', () => {
+    // 收集所有输入值
+    const nameInputs = container.querySelectorAll('.asset-name');
+    const valueInputs = container.querySelectorAll('.asset-value');
+    const newItems = [];
+    nameInputs.forEach((input, idx) => {
+      const id = input.dataset.id;
+      const name = input.value.trim() || '未命名';
+      const value = parseFloat(valueInputs[idx].value) || 0;
+      // 更新或新增（但这里按 id 修改）
+      const existing = APP_DATA.assetItems.find(item => item.id === id);
+      if (existing) {
+        existing.name = name;
+        existing.value = value;
+      } else {
+        // 这种情况不会发生，因为所有 input 都来自已有数据
+      }
+    });
+    // 同步排序（保持原有顺序）
+    // 保存
+    addLog('更新了资产数据');
+    saveData();
+    document.getElementById('modalAssets').style.display = 'none';
+    render();
+    toast('资产已更新 ✓');
+  });
+}
+
+// 保留旧函数但不用了（兼容）
 function editBudgets() {
   let modal = document.getElementById('modalBudgets');
   if (!modal) {
@@ -1429,7 +1526,14 @@ function doReset() {
     APP_DATA.notes = [];
     APP_DATA.investments = [];
     APP_DATA.liabilities = [];
-    APP_DATA.assets = { cash: 0, bankCards: 0, wechatAlipay: 0, deposits: 0, investments: 0, emergency: 0 };
+    APP_DATA.assetItems = [
+      { id: 'cash', name: '现金', value: 0 },
+      { id: 'bankCards', name: '银行卡', value: 0 },
+      { id: 'wechatAlipay', name: '微信/支付宝', value: 0 },
+      { id: 'deposits', name: '定期存款', value: 0 },
+      { id: 'investments', name: '理财投资', value: 0 },
+      { id: 'emergency', name: '应急储备', value: 0 }
+    ];
     APP_DATA.family.monthlyIncomes = {};
     const defs = [{ amount: 13500, ratio: 0.45 }, { amount: 6000, ratio: 0.20 }, { amount: 6000, ratio: 0.20 }, { amount: 3000, ratio: 0.10 }, { amount: 1500, ratio: 0.05 }];
     APP_DATA.budgets.forEach((b, i) => { b.amount = defs[i].amount; b.ratio = defs[i].ratio; });
